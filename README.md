@@ -1,41 +1,55 @@
 # Libra
 
-Libra is an intelligent Library Management and Book Recommendation System. It features a React-based frontend, a Java + Spring Boot backend service, and a Python-based machine learning model to generate personalized book recommendations.
+**Libra** is a Library Management and Book Recommendation System coursework project. It consists of a Java Swing desktop application interface, a core Java OOP domain backend, a structured relational database schema, and documentation for machine learning recommendation extensions.
+
+---
 
 ## Project Structure
 
 ```text
 Libra/
-│
-├── frontend/          ← React + TypeScript (Vite) project
+├── swing-library-app/    ← Java Swing Desktop GUI (Graded Project)
 │   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── ...
+│   │   ├── LoginFrame.java      ← Student & Librarian Login GUI (with main)
+│   │   ├── BookCrudFrame.java   ← Book Inventory Table GUI (Add/Edit/Delete)
+│   │   └── Book.java            ← Book UI Model
+│   └── README.md
 │
-├── backend/            ← Java + Spring Boot (Maven) project
-│   ├── src/
-│   ├── pom.xml
-│   └── ...
+├── backend/              ← Core Java Backend
+│   ├── src/main/java/com/libra/
+│   │   ├── Main.java            ← Main Class
+│   │   └── entity/              ← Plain Java OOP Entities & Enums
+│   │       ├── Student.java
+│   │       ├── Book.java
+│   │       ├── BookCopy.java
+│   │       ├── Author.java
+│   │       ├── Category.java
+│   │       ├── BorrowRecord.java
+│   │       ├── BookRating.java
+│   │       ├── Reservation.java
+│   │       ├── SearchHistory.java
+│   │       ├── BookView.java
+│   │       ├── CopyStatus.java
+│   │       ├── BorrowStatus.java
+│   │       └── ReservationStatus.java
+│   └── pom.xml
 │
-├── ml/                 ← Recommendation system (Python)
+├── database/             ← SQL schema, seeds & queries
+│   ├── schema.sql        ← Table definitions & constraints
+│   ├── seed.sql          ← Initial sample catalogue data
+│   └── queries.sql       ← Analytic & operational queries
+│
+├── ml/                   ← Python Recommendation Service
 │   ├── src/
-│   ├── models/
-│   ├── data/
+│   │   └── main.py       ← FastAPI recommendation endpoints
 │   └── requirements.txt
 │
-├── database/           ← SQL scripts/schema
-│   ├── schema.sql
-│   ├── seed.sql
-│   └── queries.sql
+├── docs/                 ← Architecture & Design Documentation
+│   ├── entities-relationships.md  ← Entity attributes & relationship design
+│   ├── er-diagram.md              ← Visual Mermaid ER diagram & cardinality
+│   └── oop-design.md              ← Object-oriented domain design
 │
-├── docs/               ← Project documentation
-│   ├── requirements.md
-│   ├── er-diagram.png
-│   ├── architecture.png
-│   └── oop-design.md
-│
-├── README.md
+├── README.md             ← Project overview & run instructions
 └── .gitignore
 ```
 
@@ -43,67 +57,65 @@ Libra/
 
 ## Component Setup & Running Instructions
 
-### 1. Frontend (React + Vite)
-The user interface is built using React, TypeScript, and Vite.
+### 1. Swing Library App (Desktop GUI)
+Built with pure Java Swing (no frameworks needed).
 
-* **Setup**:
-  ```bash
-  cd frontend
-  npm install
-  ```
 * **Run**:
   ```bash
-  npm run dev
+  cd swing-library-app/src
+  javac *.java
+  java LoginFrame
   ```
-* **Build**:
+* **Test Accounts**:
+  * **Student**: `STU-2291` *(Amara Chen)*, `STU-1187`, `STU-3305`, `STU-0942`
+  * **Librarian**: `LIB-001` *(Maya Osei)*
+
+---
+
+### 2. Core Java Backend
+Pure Java OOP domain entities and main entry point.
+
+* **Location**: `backend/src/main/java/com/libra/`
+* **Run**:
   ```bash
-  npm run build
+  cd backend/src/main/java
+  javac com/libra/Main.java com/libra/entity/*.java
+  java com.libra.Main
   ```
 
-### 2. Backend (Java + Spring Boot)
-The API service is built with Java and Spring Boot. It uses a Maven wrapper to ensure consistent builds.
+---
 
-* **Prerequisites**: Java 8 (or higher)
-* **Setup & Run**:
-  On Windows:
-  ```cmd
-  cd backend
-  mvnw.cmd spring-boot:run
-  ```
-  On macOS/Linux:
-  ```bash
-  cd backend
-  chmod +x mvnw
-  ./mvnw spring-boot:run
-  ```
+### 3. Database
+The `database/` folder contains standard SQL scripts:
+* `schema.sql`: DDL statements defining tables (`students`, `books`, `book_copies`, `borrow_records`, `reservations`, `ratings`, `search_history`, `book_views`).
+* `seed.sql`: Sample records to populate initial testing data.
+* `queries.sql`: Pre-built queries for reports, analytics, and circulation lookups.
 
-### 3. Machine Learning (Python Recommendation System)
-The ML system serves personalized book recommendations using collaborative and content-based filtering.
+---
 
-* **Prerequisites**: Python 3.8+ (tested on Python 3.14)
+### 4. Recommendation System (Python + FastAPI)
+Delivers personalized book recommendations.
+
 * **Setup**:
   ```bash
   cd ml
-  py -m venv venv
-  # Activate venv on Windows:
+  python -m venv venv
+  # Windows:
   .\venv\Scripts\activate
-  # Install dependencies:
+  # macOS/Linux:
+  source venv/bin/activate
+
   pip install -r requirements.txt
   ```
-* **Run (FastAPI dev server)**:
+* **Run**:
   ```bash
   uvicorn src.main:app --reload --port 8000
   ```
 
-### 4. Database Setup
-Database DDL and initial seeds are located in the `database/` directory.
-- `schema.sql`: Contains schemas for tables like `books`, `users`, `shelves`, and `recommendations`.
-- `seed.sql`: Contains initial data to populate the library database.
-- `queries.sql`: Handy queries for retrieving reports and join details.
-
 ---
 
-## Documentation
-Refer to the `docs/` folder for detailed specifications:
-- `docs/requirements.md`: System requirements.
-- `docs/oop-design.md`: Object-Oriented design and design patterns.
+## Documentation Links
+
+- [Entities & Relationships Design](docs/entities-relationships.md)
+- [Entity Relationship (ER) Diagram](docs/er-diagram.md)
+- [Object-Oriented Design](docs/oop-design.md)

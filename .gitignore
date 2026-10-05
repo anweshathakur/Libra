@@ -37,6 +37,7 @@ dist-ssr/
 *.sw?
 
 # Java / Maven
+*.class
 target/
 !.mvn/wrapper/maven-wrapper.jar
 .classpath
