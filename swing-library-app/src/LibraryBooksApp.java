@@ -5,14 +5,14 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Locale;
 
-public class DnaRecordsApp extends JFrame implements ActionListener, ListSelectionListener {
+public class LibraryBooksApp extends JFrame implements ActionListener, ListSelectionListener {
 
     private JTextField idField;
-    private JTextField organismField;
-    private JTextField sequenceField;
-    private JTextField chromosomeField;
+    private JTextField titleField;
+    private JTextField authorField;
+    private JTextField categoryField;
+    private JTextField copiesField;
 
     private JButton addBtn;
     private JButton searchBtn;
@@ -24,33 +24,36 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
     private DefaultTableModel model;
 
     private static final String[] COLUMNS = {
-        "Sequence ID", "Organism Name", "Raw Sequence", "Chromosome", "Length", "GC Content (%)"
+        "Book ID", "Title", "Author", "Category", "Copies", "Status"
     };
 
-    public DnaRecordsApp() {
-        setTitle("DNA Sequence Manager");
+    public LibraryBooksApp() {
+        setTitle("Library Management System");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(820, 520);
+        setSize(820, 540);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
         ((JComponent) getContentPane()).setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // ---- Sequence Details form (GridLayout) ----
+        // ---- Book Details form (GridLayout) ----
         idField = new JTextField();
-        organismField = new JTextField();
-        sequenceField = new JTextField();
-        chromosomeField = new JTextField();
+        titleField = new JTextField();
+        authorField = new JTextField();
+        categoryField = new JTextField();
+        copiesField = new JTextField();
 
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 8, 8));
-        formPanel.setBorder(BorderFactory.createTitledBorder("Sequence Details"));
-        formPanel.add(new JLabel("Sequence ID"));
+        JPanel formPanel = new JPanel(new GridLayout(5, 2, 8, 8));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Book Details"));
+        formPanel.add(new JLabel("Book ID"));
         formPanel.add(idField);
-        formPanel.add(new JLabel("Organism Name"));
-        formPanel.add(organismField);
-        formPanel.add(new JLabel("Raw Sequence"));
-        formPanel.add(sequenceField);
-        formPanel.add(new JLabel("Chromosome Number"));
-        formPanel.add(chromosomeField);
+        formPanel.add(new JLabel("Title"));
+        formPanel.add(titleField);
+        formPanel.add(new JLabel("Author"));
+        formPanel.add(authorField);
+        formPanel.add(new JLabel("Category"));
+        formPanel.add(categoryField);
+        formPanel.add(new JLabel("Copies"));
+        formPanel.add(copiesField);
 
         // ---- Buttons (FlowLayout) ----
         addBtn = new JButton("Add");
@@ -77,7 +80,7 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
         topPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(topPanel, BorderLayout.NORTH);
 
-        // ---- DNA Records table ----
+        // ---- Book Records table ----
         model = new DefaultTableModel(COLUMNS, 0) {
             public boolean isCellEditable(int row, int col) {
                 return false;
@@ -88,13 +91,14 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
         table.getSelectionModel().addListSelectionListener(this);
 
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("DNA Records"));
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Book Records"));
         add(scrollPane, BorderLayout.CENTER);
 
         // ---- Sample data ----
-        model.addRow(buildRow("SEQ-1092", "Homo sapiens", "ATGCGATCG", 17));
-        model.addRow(buildRow("SEQ-2041", "Escherichia coli", "GCATTCGA", 1));
-        model.addRow(buildRow("SEQ-3088", "Drosophila melanogaster", "AATTTGCGC", 3));
+        model.addRow(buildRow("B-1001", "The Overstory", "Richard Powers", "Fiction", 3));
+        model.addRow(buildRow("B-1002", "Sapiens", "Yuval Noah Harari", "History", 4));
+        model.addRow(buildRow("B-1003", "Braiding Sweetgrass", "Robin Wall Kimmerer", "Nature", 0));
+        model.addRow(buildRow("B-1004", "The Design of Everyday Things", "Don Norman", "Design", 2));
     }
 
     // ---------- Button handling ----------
@@ -124,9 +128,10 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
             return;
         }
         idField.setText(model.getValueAt(row, 0).toString());
-        organismField.setText(model.getValueAt(row, 1).toString());
-        sequenceField.setText(model.getValueAt(row, 2).toString());
-        chromosomeField.setText(model.getValueAt(row, 3).toString());
+        titleField.setText(model.getValueAt(row, 1).toString());
+        authorField.setText(model.getValueAt(row, 2).toString());
+        categoryField.setText(model.getValueAt(row, 3).toString());
+        copiesField.setText(model.getValueAt(row, 4).toString());
     }
 
     private void addRecord() {
@@ -135,7 +140,7 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
             return;
         }
         if (findRow(record[0].toString()) != -1) {
-            showMessage("A record with that Sequence ID already exists.");
+            showMessage("A book with that Book ID already exists.");
             return;
         }
         model.addRow(record);
@@ -144,26 +149,26 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
 
     private void searchRecord() {
         String id = idField.getText().trim();
-        String organism = organismField.getText().trim();
+        String title = titleField.getText().trim();
         int row = -1;
 
         if (!id.isEmpty()) {
             row = findRow(id);
-        } else if (!organism.isEmpty()) {
+        } else if (!title.isEmpty()) {
             for (int i = 0; i < model.getRowCount(); i++) {
                 String name = model.getValueAt(i, 1).toString().toLowerCase();
-                if (name.contains(organism.toLowerCase())) {
+                if (name.contains(title.toLowerCase())) {
                     row = i;
                     break;
                 }
             }
         } else {
-            showMessage("Enter a Sequence ID or Organism Name to search.");
+            showMessage("Enter a Book ID or Title to search.");
             return;
         }
 
         if (row == -1) {
-            showMessage("No matching record found.");
+            showMessage("No matching book found.");
         } else {
             table.setRowSelectionInterval(row, row);
             table.scrollRectToVisible(table.getCellRect(row, 0, true));
@@ -177,13 +182,13 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
         }
         int row = findRow(record[0].toString());
         if (row == -1) {
-            showMessage("No record with that Sequence ID. Use Add for a new record.");
+            showMessage("No book with that Book ID. Use Add for a new book.");
             return;
         }
         for (int col = 0; col < COLUMNS.length; col++) {
             model.setValueAt(record[col], row, col);
         }
-        showMessage("Record updated.");
+        showMessage("Book updated.");
     }
 
     private void deleteRecord() {
@@ -195,11 +200,11 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
             }
         }
         if (row == -1) {
-            showMessage("Select a record (or enter its Sequence ID) to delete.");
+            showMessage("Select a book (or enter its Book ID) to delete.");
             return;
         }
         int choice = JOptionPane.showConfirmDialog(this,
-                "Delete record " + model.getValueAt(row, 0) + "?",
+                "Delete book " + model.getValueAt(row, 0) + "?",
                 "Confirm Delete", JOptionPane.YES_NO_OPTION);
         if (choice == JOptionPane.YES_OPTION) {
             model.removeRow(row);
@@ -209,16 +214,17 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
 
     private void clearFields() {
         idField.setText("");
-        organismField.setText("");
-        sequenceField.setText("");
-        chromosomeField.setText("");
+        titleField.setText("");
+        authorField.setText("");
+        categoryField.setText("");
+        copiesField.setText("");
         table.clearSelection();
         idField.requestFocus();
     }
 
     // ---------- Helpers ----------
 
-    // Returns the row index with the given Sequence ID, or -1
+    // Returns the row index with the given Book ID, or -1
     private int findRow(String id) {
         for (int i = 0; i < model.getRowCount(); i++) {
             if (model.getValueAt(i, 0).toString().equalsIgnoreCase(id)) {
@@ -231,58 +237,33 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
     // Validates the form and returns a full table row, or null if invalid
     private Object[] readRecord() {
         String id = idField.getText().trim();
-        String organism = organismField.getText().trim();
-        String seq = sequenceField.getText().trim().toUpperCase();
-        String chrText = chromosomeField.getText().trim();
+        String title = titleField.getText().trim();
+        String author = authorField.getText().trim();
+        String category = categoryField.getText().trim();
+        String copiesText = copiesField.getText().trim();
 
-        if (id.isEmpty() || organism.isEmpty() || seq.isEmpty() || chrText.isEmpty()) {
+        if (id.isEmpty() || title.isEmpty() || author.isEmpty()
+                || category.isEmpty() || copiesText.isEmpty()) {
             showMessage("Please fill in all fields.");
             return null;
         }
-        if (!isValidSequence(seq)) {
-            showMessage("Raw Sequence may only contain A, C, G and T.");
-            return null;
-        }
-        int chromosome;
+        int copies;
         try {
-            chromosome = Integer.parseInt(chrText);
+            copies = Integer.parseInt(copiesText);
         } catch (NumberFormatException ex) {
-            showMessage("Chromosome Number must be a whole number.");
+            showMessage("Copies must be a whole number.");
             return null;
         }
-        if (chromosome < 1) {
-            showMessage("Chromosome Number must be 1 or higher.");
+        if (copies < 0) {
+            showMessage("Copies cannot be negative.");
             return null;
         }
-        return buildRow(id, organism, seq, chromosome);
+        return buildRow(id, title, author, category, copies);
     }
 
-    private Object[] buildRow(String id, String organism, String seq, int chromosome) {
-        String gc = String.format(Locale.US, "%.2f", gcContent(seq));
-        return new Object[] {
-            id, organism, seq, String.valueOf(chromosome), String.valueOf(seq.length()), gc
-        };
-    }
-
-    private boolean isValidSequence(String seq) {
-        for (int i = 0; i < seq.length(); i++) {
-            char c = seq.charAt(i);
-            if (c != 'A' && c != 'C' && c != 'G' && c != 'T') {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private double gcContent(String seq) {
-        int gc = 0;
-        for (int i = 0; i < seq.length(); i++) {
-            char c = seq.charAt(i);
-            if (c == 'G' || c == 'C') {
-                gc++;
-            }
-        }
-        return gc * 100.0 / seq.length();
+    private Object[] buildRow(String id, String title, String author, String category, int copies) {
+        String status = copies > 0 ? "Available" : "Out of stock";
+        return new Object[] { id, title, author, category, String.valueOf(copies), status };
     }
 
     private void showMessage(String message) {
@@ -292,7 +273,7 @@ public class DnaRecordsApp extends JFrame implements ActionListener, ListSelecti
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new DnaRecordsApp().setVisible(true);
+                new LibraryBooksApp().setVisible(true);
             }
         });
     }
