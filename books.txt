@@ -1,0 +1,4 @@
+B-1001,The Overstory,Richard Powers,Fiction,3
+B-1002,Sapiens,Yuval Noah Harari,History,4
+B-1003,Braiding Sweetgrass,Robin Wall Kimmerer,Nature,0
+B-1004,The Design of Everyday Things,Don Norman,Design,2
