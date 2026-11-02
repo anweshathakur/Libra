@@ -9,7 +9,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -242,51 +244,67 @@ public class StudentPanelApp extends JFrame implements ActionListener {
         }
     }
 
-    // load records from text file at the start of project
+    // load records from text file at the start of project with exception handling
     private void loadDataFromFile() {
         File file = new File("books.txt");
         if (!file.exists()) {
             return;
         }
 
+        Scanner scanner = null;
         try {
-            Scanner scanner = new Scanner(file);
+            scanner = new Scanner(file);
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
                 if (line.length() > 0) {
                     String[] parts = line.split(",");
                     if (parts.length >= 5) {
-                        String id = parts[0].trim();
-                        String title = parts[1].trim();
-                        String author = parts[2].trim();
-                        String category = parts[3].trim();
-                        int copies = Integer.parseInt(parts[4].trim());
-                        Book book = new Book(id, title, author, category, copies);
-                        addRow(book);
+                        try {
+                            String id = parts[0].trim();
+                            String title = parts[1].trim();
+                            String author = parts[2].trim();
+                            String category = parts[3].trim();
+                            int copies = Integer.parseInt(parts[4].trim());
+                            Book book = new Book(id, title, author, category, copies);
+                            addRow(book);
+                        } catch (NumberFormatException ex) {
+                            JOptionPane.showMessageDialog(this, "Skipping invalid number in books.txt: " + ex.getMessage());
+                        } catch (IllegalArgumentException ex) {
+                            JOptionPane.showMessageDialog(this, "Skipping invalid record in books.txt: " + ex.getMessage());
+                        }
                     }
                 }
             }
-            scanner.close();
+        } catch (FileNotFoundException e) {
+            JOptionPane.showMessageDialog(this, "File books.txt not found: " + e.getMessage());
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error reading from text file");
+            JOptionPane.showMessageDialog(this, "Error reading from text file: " + e.getMessage());
+        } finally {
+            if (scanner != null) {
+                scanner.close();
+            }
         }
     }
 
-    // save current catalogue list into text file
+    // save current catalogue list into text file with exception handling
     private void saveDataToFile(boolean showMessage) {
+        PrintWriter pw = null;
         try {
             FileWriter fw = new FileWriter("books.txt");
-            PrintWriter pw = new PrintWriter(fw);
+            pw = new PrintWriter(fw);
             for (int i = 0; i < bookList.size(); i++) {
                 Book book = bookList.get(i);
                 pw.println(book.getBookId() + "," + book.getTitle() + "," + book.getAuthor() + "," + book.getCategory() + "," + book.getCopies());
             }
-            pw.close();
             if (showMessage) {
                 JOptionPane.showMessageDialog(this, "Table data saved to books.txt");
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error saving data to text file");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error saving data to text file: " + e.getMessage());
+        } finally {
+            if (pw != null) {
+                pw.close();
+            }
         }
     }
 
@@ -313,136 +331,142 @@ public class StudentPanelApp extends JFrame implements ActionListener {
         return -1;
     }
 
-    // Search catalogue by Book ID or Title
+    // Search catalogue by Book ID or Title with exception handling
     private void searchBook() {
-        String id = bookIdField.getText().trim();
-        String title = searchTitleField.getText().trim();
+        try {
+            String id = bookIdField.getText().trim();
+            String title = searchTitleField.getText().trim();
 
-        if (id.length() == 0 && title.length() == 0) {
-            JOptionPane.showMessageDialog(this, "Enter a Book ID or Title to search");
-            return;
-        }
-
-        for (int i = 0; i < bookList.size(); i++) {
-            Book b = bookList.get(i);
-            boolean match = id.length() > 0
-                    ? b.getBookId().equalsIgnoreCase(id)
-                    : b.getTitle().equalsIgnoreCase(title);
-
-            if (match) {
-                catalogueTable.setRowSelectionInterval(i, i);
-                catalogueTable.scrollRectToVisible(catalogueTable.getCellRect(i, 0, true));
-                bookIdField.setText(b.getBookId());
-                searchTitleField.setText(b.getTitle());
-                JOptionPane.showMessageDialog(this, "Record found");
-                return;
+            if (id.length() == 0 && title.length() == 0) {
+                throw new IllegalArgumentException("Enter a Book ID or Title to search");
             }
-        }
 
-        JOptionPane.showMessageDialog(this, "Book not found");
+            for (int i = 0; i < bookList.size(); i++) {
+                Book b = bookList.get(i);
+                boolean match = id.length() > 0
+                        ? b.getBookId().equalsIgnoreCase(id)
+                        : b.getTitle().equalsIgnoreCase(title);
+
+                if (match) {
+                    catalogueTable.setRowSelectionInterval(i, i);
+                    catalogueTable.scrollRectToVisible(catalogueTable.getCellRect(i, 0, true));
+                    bookIdField.setText(b.getBookId());
+                    searchTitleField.setText(b.getTitle());
+                    JOptionPane.showMessageDialog(this, "Record found");
+                    return;
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, "Book not found");
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+        }
     }
 
-    // Borrow a book
+    // Borrow a book with exception handling
     private void borrowBook() {
-        String stuId = studentIdField.getText().trim();
-        String stuName = studentNameField.getText().trim();
-        String bookId = bookIdField.getText().trim();
+        try {
+            String stuId = studentIdField.getText().trim();
+            String stuName = studentNameField.getText().trim();
+            String bookId = bookIdField.getText().trim();
 
-        if (stuId.length() == 0 || stuName.length() == 0 || bookId.length() == 0) {
-            JOptionPane.showMessageDialog(this, "Please fill in Student ID, Name, and Book ID");
-            return;
+            if (stuId.length() == 0 || stuName.length() == 0 || bookId.length() == 0) {
+                throw new IllegalArgumentException("Please fill in Student ID, Name, and Book ID");
+            }
+
+            if (stuId.length() > 10) {
+                throw new IllegalArgumentException("Student ID cannot exceed 10 characters");
+            }
+
+            int row = findBookById(bookId);
+            if (row == -1) {
+                throw new IllegalArgumentException("Book not found");
+            }
+
+            Book book = bookList.get(row);
+            if (book.getCopies() <= 0) {
+                throw new IllegalArgumentException("Book is out of stock. Use Reserve instead");
+            }
+
+            book.setCopies(book.getCopies() - 1);
+            catalogueModel.setValueAt(book.getCopies(), row, 4);
+            catalogueModel.setValueAt(book.getStatus(), row, 5);
+
+            String recId = "BR-" + (borrowModel.getRowCount() + 1);
+            borrowModel.addRow(new Object[]{
+                    recId, stuId, stuName, book.getBookId(), book.getTitle(), "Borrowed"
+            });
+
+            saveDataToFile(false);
+            JOptionPane.showMessageDialog(this, "Book borrowed successfully");
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
         }
-
-        if (stuId.length() > 10) {
-            JOptionPane.showMessageDialog(this, "Student ID cannot exceed 10 characters");
-            return;
-        }
-
-        int row = findBookById(bookId);
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Book not found");
-            return;
-        }
-
-        Book book = bookList.get(row);
-        if (book.getCopies() <= 0) {
-            JOptionPane.showMessageDialog(this, "Book is out of stock. Use Reserve instead");
-            return;
-        }
-
-        book.setCopies(book.getCopies() - 1);
-        catalogueModel.setValueAt(book.getCopies(), row, 4);
-        catalogueModel.setValueAt(book.getStatus(), row, 5);
-
-        String recId = "BR-" + (borrowModel.getRowCount() + 1);
-        borrowModel.addRow(new Object[]{
-                recId, stuId, stuName, book.getBookId(), book.getTitle(), "Borrowed"
-        });
-
-        saveDataToFile(false);
-        JOptionPane.showMessageDialog(this, "Book borrowed successfully");
     }
 
-    // Return a borrowed book
+    // Return a borrowed book with exception handling
     private void returnBook() {
-        int row = borrowTable.getSelectedRow();
+        try {
+            int row = borrowTable.getSelectedRow();
 
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Select a borrowed book from the bottom table first");
-            return;
+            if (row == -1) {
+                throw new IllegalArgumentException("Select a borrowed book from the bottom table first");
+            }
+
+            String status = borrowModel.getValueAt(row, 5).toString();
+            if (!status.equals("Borrowed")) {
+                throw new IllegalArgumentException("This book is not currently borrowed");
+            }
+
+            String bookId = borrowModel.getValueAt(row, 3).toString();
+            int bookRow = findBookById(bookId);
+
+            if (bookRow != -1) {
+                Book book = bookList.get(bookRow);
+                book.setCopies(book.getCopies() + 1);
+                catalogueModel.setValueAt(book.getCopies(), bookRow, 4);
+                catalogueModel.setValueAt(book.getStatus(), bookRow, 5);
+            }
+
+            borrowModel.setValueAt("Returned", row, 5);
+            saveDataToFile(false);
+            JOptionPane.showMessageDialog(this, "Book returned successfully");
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
         }
-
-        String status = borrowModel.getValueAt(row, 5).toString();
-        if (!status.equals("Borrowed")) {
-            JOptionPane.showMessageDialog(this, "This book is not currently borrowed");
-            return;
-        }
-
-        String bookId = borrowModel.getValueAt(row, 3).toString();
-        int bookRow = findBookById(bookId);
-
-        if (bookRow != -1) {
-            Book book = bookList.get(bookRow);
-            book.setCopies(book.getCopies() + 1);
-            catalogueModel.setValueAt(book.getCopies(), bookRow, 4);
-            catalogueModel.setValueAt(book.getStatus(), bookRow, 5);
-        }
-
-        borrowModel.setValueAt("Returned", row, 5);
-        saveDataToFile(false);
-        JOptionPane.showMessageDialog(this, "Book returned successfully");
     }
 
-    // Reserve a book
+    // Reserve a book with exception handling
     private void reserveBook() {
-        String stuId = studentIdField.getText().trim();
-        String stuName = studentNameField.getText().trim();
-        String bookId = bookIdField.getText().trim();
+        try {
+            String stuId = studentIdField.getText().trim();
+            String stuName = studentNameField.getText().trim();
+            String bookId = bookIdField.getText().trim();
 
-        if (stuId.length() == 0 || stuName.length() == 0 || bookId.length() == 0) {
-            JOptionPane.showMessageDialog(this, "Please fill in Student ID, Name, and Book ID");
-            return;
+            if (stuId.length() == 0 || stuName.length() == 0 || bookId.length() == 0) {
+                throw new IllegalArgumentException("Please fill in Student ID, Name, and Book ID");
+            }
+
+            if (stuId.length() > 10) {
+                throw new IllegalArgumentException("Student ID cannot exceed 10 characters");
+            }
+
+            int row = findBookById(bookId);
+            if (row == -1) {
+                throw new IllegalArgumentException("Book not found");
+            }
+
+            Book book = bookList.get(row);
+            String recId = "RES-" + (borrowModel.getRowCount() + 1);
+
+            borrowModel.addRow(new Object[]{
+                    recId, stuId, stuName, book.getBookId(), book.getTitle(), "Reserved"
+            });
+
+            JOptionPane.showMessageDialog(this, "Book reserved successfully");
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
         }
-
-        if (stuId.length() > 10) {
-            JOptionPane.showMessageDialog(this, "Student ID cannot exceed 10 characters");
-            return;
-        }
-
-        int row = findBookById(bookId);
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Book not found");
-            return;
-        }
-
-        Book book = bookList.get(row);
-        String recId = "RES-" + (borrowModel.getRowCount() + 1);
-
-        borrowModel.addRow(new Object[]{
-                recId, stuId, stuName, book.getBookId(), book.getTitle(), "Reserved"
-        });
-
-        JOptionPane.showMessageDialog(this, "Book reserved successfully");
     }
 
     // Clear fields

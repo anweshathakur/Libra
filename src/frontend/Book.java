@@ -9,6 +9,12 @@ public class Book {
     private String status;
 
     public Book(String bookId, String title, String author, String category, int copies) {
+        if (bookId == null || bookId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Book ID cannot be empty");
+        }
+        if (copies < 0) {
+            throw new IllegalArgumentException("Copies cannot be negative");
+        }
         this.bookId = bookId;
         this.title = title;
         this.author = author;
@@ -49,6 +55,9 @@ public class Book {
     }
 
     public void setCopies(int copies) {
+        if (copies < 0) {
+            throw new IllegalArgumentException("Copies cannot be negative");
+        }
         this.copies = copies;
         this.status = calculateStatus(this.copies);
     }

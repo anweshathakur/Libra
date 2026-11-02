@@ -9,7 +9,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -215,51 +217,67 @@ public class LibraryManagementSystem extends JFrame implements ActionListener {
         }
     }
 
-    // load records from text file at the start of project
+    // load records from text file at the start of project with exception handling
     private void loadDataFromFile() {
         File file = new File("books.txt");
         if (!file.exists()) {
             return;
         }
 
+        Scanner scanner = null;
         try {
-            Scanner scanner = new Scanner(file);
+            scanner = new Scanner(file);
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
                 if (line.length() > 0) {
                     String[] parts = line.split(",");
                     if (parts.length >= 5) {
-                        String id = parts[0].trim();
-                        String title = parts[1].trim();
-                        String author = parts[2].trim();
-                        String category = parts[3].trim();
-                        int copies = Integer.parseInt(parts[4].trim());
-                        Book book = new Book(id, title, author, category, copies);
-                        addRow(book);
+                        try {
+                            String id = parts[0].trim();
+                            String title = parts[1].trim();
+                            String author = parts[2].trim();
+                            String category = parts[3].trim();
+                            int copies = Integer.parseInt(parts[4].trim());
+                            Book book = new Book(id, title, author, category, copies);
+                            addRow(book);
+                        } catch (NumberFormatException ex) {
+                            JOptionPane.showMessageDialog(this, "Skipping invalid number in books.txt: " + ex.getMessage());
+                        } catch (IllegalArgumentException ex) {
+                            JOptionPane.showMessageDialog(this, "Skipping invalid record in books.txt: " + ex.getMessage());
+                        }
                     }
                 }
             }
-            scanner.close();
+        } catch (FileNotFoundException e) {
+            JOptionPane.showMessageDialog(this, "File books.txt not found: " + e.getMessage());
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error reading from text file");
+            JOptionPane.showMessageDialog(this, "Error reading from text file: " + e.getMessage());
+        } finally {
+            if (scanner != null) {
+                scanner.close();
+            }
         }
     }
 
-    // save current book list into text file
+    // save current book list into text file with exception handling
     private void saveDataToFile(boolean showMessage) {
+        PrintWriter pw = null;
         try {
             FileWriter fw = new FileWriter("books.txt");
-            PrintWriter pw = new PrintWriter(fw);
+            pw = new PrintWriter(fw);
             for (int i = 0; i < bookList.size(); i++) {
                 Book book = bookList.get(i);
                 pw.println(book.getBookId() + "," + book.getTitle() + "," + book.getAuthor() + "," + book.getCategory() + "," + book.getCopies());
             }
-            pw.close();
             if (showMessage) {
                 JOptionPane.showMessageDialog(this, "Table data saved to books.txt");
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error saving data to text file");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error saving data to text file: " + e.getMessage());
+        } finally {
+            if (pw != null) {
+                pw.close();
+            }
         }
     }
 
@@ -276,190 +294,175 @@ public class LibraryManagementSystem extends JFrame implements ActionListener {
         });
     }
 
-    // helper method to check if a string contains only digits
-    private boolean isInteger(String str) {
-        if (str == null || str.length() == 0) {
-            return false;
-        }
-        for (int i = 0; i < str.length(); i++) {
-            char ch = str.charAt(i);
-            if (ch < '0' || ch > '9') {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // function to add new book with validation
+    // function to add new book with exception handling
     private void addBook() {
-        String id = idField.getText().trim();
-        String title = titleField.getText().trim();
-        String author = authorField.getText().trim();
-        String category = categoryField.getText().trim();
-        String copiesText = copiesField.getText().trim();
+        try {
+            String id = idField.getText().trim();
+            String title = titleField.getText().trim();
+            String author = authorField.getText().trim();
+            String category = categoryField.getText().trim();
+            String copiesText = copiesField.getText().trim();
 
-        // validation for empty fields
-        if (id.length() == 0 || title.length() == 0 || author.length() == 0
-                || category.length() == 0 || copiesText.length() == 0) {
-            JOptionPane.showMessageDialog(this, "Please fill in all text fields");
-            return;
-        }
-
-        // validation for book id length
-        if (id.length() > 10) {
-            JOptionPane.showMessageDialog(this, "Book ID cannot exceed 10 characters");
-            return;
-        }
-
-        // check if book id already exists in object list
-        for (int i = 0; i < bookList.size(); i++) {
-            if (bookList.get(i).getBookId().equalsIgnoreCase(id)) {
-                JOptionPane.showMessageDialog(this, "Book ID must be unique");
-                return;
+            // validation for empty fields
+            if (id.length() == 0 || title.length() == 0 || author.length() == 0
+                    || category.length() == 0 || copiesText.length() == 0) {
+                throw new IllegalArgumentException("Please fill in all text fields");
             }
-        }
 
-        // validation for copies number
-        if (!isInteger(copiesText)) {
-            JOptionPane.showMessageDialog(this, "Copies must be a valid non-negative whole number");
-            return;
-        }
+            // validation for book id length
+            if (id.length() > 10) {
+                throw new IllegalArgumentException("Book ID cannot exceed 10 characters");
+            }
 
-        if (copiesText.length() > 7) {
-            JOptionPane.showMessageDialog(this, "Copies cannot exceed 7 digits");
-            return;
-        }
+            // check if book id already exists in object list
+            for (int i = 0; i < bookList.size(); i++) {
+                if (bookList.get(i).getBookId().equalsIgnoreCase(id)) {
+                    throw new IllegalArgumentException("Book ID must be unique");
+                }
+            }
 
-        int copies = Integer.parseInt(copiesText);
-        Book book = new Book(id, title, author, category, copies);
-        addRow(book);
-        saveDataToFile(false);
-        clearFields();
-        JOptionPane.showMessageDialog(this, "Record added to table successfully");
+            if (copiesText.length() > 7) {
+                throw new IllegalArgumentException("Copies cannot exceed 7 digits");
+            }
+
+            // parse copies and validate via Book constructor
+            int copies = Integer.parseInt(copiesText);
+            Book book = new Book(id, title, author, category, copies);
+
+            addRow(book);
+            saveDataToFile(false);
+            clearFields();
+            JOptionPane.showMessageDialog(this, "Record added to table successfully");
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Copies must be a valid whole number");
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+        }
     }
 
     // function to search record by Book ID or Title
     private void searchBook() {
-        String searchId = idField.getText().trim();
-        String searchTitle = titleField.getText().trim();
+        try {
+            String searchId = idField.getText().trim();
+            String searchTitle = titleField.getText().trim();
 
-        if (searchId.length() == 0 && searchTitle.length() == 0) {
-            JOptionPane.showMessageDialog(this, "Enter a Book ID or Title to search");
-            return;
-        }
-
-        boolean found = false;
-        for (int i = 0; i < bookList.size(); i++) {
-            Book b = bookList.get(i);
-            boolean match = searchId.length() > 0
-                    ? b.getBookId().equalsIgnoreCase(searchId)
-                    : b.getTitle().equalsIgnoreCase(searchTitle);
-
-            if (match) {
-                bookTable.setRowSelectionInterval(i, i);
-                bookTable.scrollRectToVisible(bookTable.getCellRect(i, 0, true));
-                idField.setText(b.getBookId());
-                titleField.setText(b.getTitle());
-                authorField.setText(b.getAuthor());
-                categoryField.setText(b.getCategory());
-                copiesField.setText(String.valueOf(b.getCopies()));
-                JOptionPane.showMessageDialog(this, "Record found");
-                found = true;
-                break;
+            if (searchId.length() == 0 && searchTitle.length() == 0) {
+                throw new IllegalArgumentException("Enter a Book ID or Title to search");
             }
-        }
 
-        if (!found) {
-            JOptionPane.showMessageDialog(this, "Record not found");
+            boolean found = false;
+            for (int i = 0; i < bookList.size(); i++) {
+                Book b = bookList.get(i);
+                boolean match = searchId.length() > 0
+                        ? b.getBookId().equalsIgnoreCase(searchId)
+                        : b.getTitle().equalsIgnoreCase(searchTitle);
+
+                if (match) {
+                    bookTable.setRowSelectionInterval(i, i);
+                    bookTable.scrollRectToVisible(bookTable.getCellRect(i, 0, true));
+                    idField.setText(b.getBookId());
+                    titleField.setText(b.getTitle());
+                    authorField.setText(b.getAuthor());
+                    categoryField.setText(b.getCategory());
+                    copiesField.setText(String.valueOf(b.getCopies()));
+                    JOptionPane.showMessageDialog(this, "Record found");
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                JOptionPane.showMessageDialog(this, "Record not found");
+            }
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
         }
     }
 
-    // function to update selected record with validation
+    // function to update selected record with exception handling
     private void updateBook() {
-        int row = bookTable.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a row from the table first");
-            return;
-        }
-
-        String id = idField.getText().trim();
-        String title = titleField.getText().trim();
-        String author = authorField.getText().trim();
-        String category = categoryField.getText().trim();
-        String copiesText = copiesField.getText().trim();
-
-        // validation for empty fields
-        if (id.length() == 0 || title.length() == 0 || author.length() == 0
-                || category.length() == 0 || copiesText.length() == 0) {
-            JOptionPane.showMessageDialog(this, "Please fill in all text fields");
-            return;
-        }
-
-        // validation for book id length
-        if (id.length() > 10) {
-            JOptionPane.showMessageDialog(this, "Book ID cannot exceed 10 characters");
-            return;
-        }
-
-        // check if book id already exists for another record in object list
-        for (int i = 0; i < bookList.size(); i++) {
-            if (i != row && bookList.get(i).getBookId().equalsIgnoreCase(id)) {
-                JOptionPane.showMessageDialog(this, "Book ID already exists for another record");
-                return;
+        try {
+            int row = bookTable.getSelectedRow();
+            if (row == -1) {
+                throw new IllegalArgumentException("Please select a row from the table first");
             }
-        }
 
-        // validation for copies number
-        if (!isInteger(copiesText)) {
-            JOptionPane.showMessageDialog(this, "Copies must be a valid non-negative whole number");
-            return;
-        }
+            String id = idField.getText().trim();
+            String title = titleField.getText().trim();
+            String author = authorField.getText().trim();
+            String category = categoryField.getText().trim();
+            String copiesText = copiesField.getText().trim();
 
-        if (copiesText.length() > 7) {
-            JOptionPane.showMessageDialog(this, "Copies cannot exceed 7 digits");
-            return;
-        }
+            // validation for empty fields
+            if (id.length() == 0 || title.length() == 0 || author.length() == 0
+                    || category.length() == 0 || copiesText.length() == 0) {
+                throw new IllegalArgumentException("Please fill in all text fields");
+            }
 
-        int copies = Integer.parseInt(copiesText);
-        Book book = new Book(id, title, author, category, copies);
+            // validation for book id length
+            if (id.length() > 10) {
+                throw new IllegalArgumentException("Book ID cannot exceed 10 characters");
+            }
 
-        // update both object list and table display
-        bookList.set(row, book);
-        tableModel.setValueAt(book.getBookId(), row, 0);
-        tableModel.setValueAt(book.getTitle(), row, 1);
-        tableModel.setValueAt(book.getAuthor(), row, 2);
-        tableModel.setValueAt(book.getCategory(), row, 3);
-        tableModel.setValueAt(book.getCopies(), row, 4);
-        tableModel.setValueAt(book.getStatus(), row, 5);
+            // check if book id already exists for another record in object list
+            for (int i = 0; i < bookList.size(); i++) {
+                if (i != row && bookList.get(i).getBookId().equalsIgnoreCase(id)) {
+                    throw new IllegalArgumentException("Book ID already exists for another record");
+                }
+            }
 
-        saveDataToFile(false);
-        clearFields();
-        JOptionPane.showMessageDialog(this, "Record updated successfully");
-    }
+            if (copiesText.length() > 7) {
+                throw new IllegalArgumentException("Copies cannot exceed 7 digits");
+            }
 
-    // function to delete selected record with confirmation
-    private void deleteBook() {
-        int row = bookTable.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a row from the table first");
-            return;
-        }
+            int copies = Integer.parseInt(copiesText);
+            Book book = new Book(id, title, author, category, copies);
 
-        // confirmation dialog before deleting
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Are you sure you want to delete this book?",
-                "Confirm Delete",
-                JOptionPane.YES_NO_OPTION
-        );
+            // update both object list and table display
+            bookList.set(row, book);
+            tableModel.setValueAt(book.getBookId(), row, 0);
+            tableModel.setValueAt(book.getTitle(), row, 1);
+            tableModel.setValueAt(book.getAuthor(), row, 2);
+            tableModel.setValueAt(book.getCategory(), row, 3);
+            tableModel.setValueAt(book.getCopies(), row, 4);
+            tableModel.setValueAt(book.getStatus(), row, 5);
 
-        if (confirm == JOptionPane.YES_OPTION) {
-            // remove from both object list and table display
-            bookList.remove(row);
-            tableModel.removeRow(row);
             saveDataToFile(false);
             clearFields();
-            JOptionPane.showMessageDialog(this, "Record deleted successfully");
+            JOptionPane.showMessageDialog(this, "Record updated successfully");
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Copies must be a valid whole number");
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
+        }
+    }
+
+    // function to delete selected record with confirmation and exception handling
+    private void deleteBook() {
+        try {
+            int row = bookTable.getSelectedRow();
+            if (row == -1) {
+                throw new IllegalArgumentException("Please select a row from the table first");
+            }
+
+            // confirmation dialog before deleting
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to delete this book?",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // remove from both object list and table display
+                bookList.remove(row);
+                tableModel.removeRow(row);
+                saveDataToFile(false);
+                clearFields();
+                JOptionPane.showMessageDialog(this, "Record deleted successfully");
+            }
+        } catch (IllegalArgumentException | IndexOutOfBoundsException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage());
         }
     }
 
